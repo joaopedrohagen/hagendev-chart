@@ -1,0 +1,34 @@
+{{- define "pvc" }}
+{{- $service := .service }}
+{{- $namespace := .namespace }}
+{{- if and $service.persistentVolume.enabled $service.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $service.name }}
+  namespace: {{ $namespace }}
+
+  # annotations:
+  #   "helm.sh/hook": pre-install
+  #   "helm.sh/hook-weight": "4"
+
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ $service.name }}
+
+  resources:
+    requests:
+      storage: {{ $service.persistentVolume.storage }}
+  volumeName: {{ $service.name }}
+{{- end }}
+{{- end }}
+
+{{- range $service := .Values.microservices }}
+  {{- include "pvc" (dict "service" $service "namespace" $.Values.namespace) }}
+{{ end }}
+
+{{- range $service := .Values.cronjobs }}
+  {{- include "pvc" (dict "service" $service "namespace" $.Values.namespace) }}
+{{ end }}

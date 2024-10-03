@@ -1,0 +1,74 @@
+{{- define "cronjob" }}
+{{- $service := .service }}
+{{- $namespace := .namespace }}
+{{- if $service.enabled }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ $service.name }}
+  namespace: {{ $namespace }}
+
+  # annotations:
+  #   "helm.sh/hook": pre-install
+  #   "helm.sh/hook-weight": "7"
+
+spec:
+  schedule: {{ $service.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: {{ $service.name }}
+
+        spec:
+          containers:
+
+          - name: cron
+            image: {{ $service.image }}
+            imagePullPolicy: {{ $service.imagePullPolicy }}
+            command: {{ $service.command | toJson}}
+            args: {{ $service.args | toJson}}
+
+            resources:
+              requests:
+                cpu: {{ $service.cpu.min }}
+                memory: {{ $service.memory.min }}
+              limits:
+                cpu: {{ $service.cpu.max }}
+                memory: {{ $service.memory.max }}
+
+            envFrom:
+            - secretRef:
+                name: {{ $service.name }}
+
+            {{- if and $service.persistentVolume (hasKey $service.persistentVolume "enabled") $service.persistentVolume.enabled }}
+            volumeMounts:
+              - name: {{ $service.name }}
+                mountPath: {{ $service.mountPath }}
+            {{- end }}
+
+          {{- if and $service.persistentVolume (hasKey $service.persistentVolume "enabled") $service.persistentVolume.enabled }}
+          volumes:
+            - name: {{ $service.name }}
+              persistentVolumeClaim:
+                claimName: {{ $service.name }}
+          {{- end }}
+
+          restartPolicy: Never
+          tolerations:
+            - key: environment
+              operator: Equal
+              value: {{ $service.node }}
+              effect: NoSchedule
+      backoffLimit: 2
+{{- end }}
+{{- end }}
+
+{{- range $service := .Values.cronjobs }}
+  {{- include "cronjob" (dict "service" $service "namespace" $.Values.namespace) }}
+{{ end }}

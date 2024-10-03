@@ -1,0 +1,21 @@
+apiVersion: v2
+name: HagenDev
+description: Tests Workloads for the Cloud System
+version: 0.1.0
+appVersion: 1.0.0
+
+dependencies:
+  - name: postgres
+    repository: file://charts/postgres
+    version: 1.0.0
+  - name: mongodb
+    repository: file://charts/mongodb
+    version: 1.0.0
+
+maintainers:
+  - name: João Pedro Hagen
+    email: joaopedro@hagen.dev.br
+    url: https://linkedin.com/in/joaopedrohagen
+
+home: https://hagen.dev.br
+

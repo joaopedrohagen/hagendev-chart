@@ -1,0 +1,48 @@
+namespace: prod
+microservices:
+
+  postgres:
+    name: postgres
+    enabled: true
+    image: postgres:16
+    imagePullPolicy:  IfNotPresent
+    tolerations: database
+    hpaCpu: 90
+    hpaMemory: 80
+    secrets:
+      - postgres
+    containerPort: 5432
+    port: 5432
+    targetPort: 5432
+    nodePort:
+      enabled: false
+      # externalPort: 32001
+    replicas:
+      min: 1
+      max: 1
+    cpu:
+      min: 0.1
+      max: 0.3
+    memory:
+      min: 100Mi
+      max: 500Mi
+    persistentVolume:
+      enabled: true
+      type: nfs # local or nfs
+      # If the NFS type is enabled, it is necessary to inform a server
+      server: 10.0.1.10
+      path: /srv/nfs/databases/postgres
+      storage: 1Gi
+    mountPath: /var/lib/postgresql/data
+
+variables:
+
+  configMap:
+    services:
+      RICK_SANCHEZ: "Wubba Lubba Dub Dub"
+
+  secret:
+    postgres:
+      POSTGRES_USER: aGFnZW4=
+      POSTGRES_PASSWORD: dWNhbnRhdXRoNjk=
+      POSTGRES_DB: aGFnZW4=

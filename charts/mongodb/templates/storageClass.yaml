@@ -1,0 +1,26 @@
+{{- define "sc" }}
+{{- $service := .service }}
+{{- if and $service.persistentVolume.enabled $service.enabled }}
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ $service.name }}
+
+  # annotations:
+  #   "helm.sh/hook": pre-install
+  #   "helm.sh/hook-weight": "5"
+
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+{{- end }}
+{{- end }}
+
+{{- range $service := .Values.microservices }}
+  {{- include "sc" (dict "service" $service) }}
+{{ end }}
+
+{{- range $service := .Values.cronjobs }}
+  {{- include "sc" (dict "service" $service) }}
+{{ end }}

@@ -1,0 +1,45 @@
+
+{{- define "pv" }}
+{{- $service := .service }}
+{{- if and $service.persistentVolume.enabled $service.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ $service.name }}
+
+  # annotations:
+  #   "helm.sh/hook": pre-install
+  #   "helm.sh/hook-weight": "3"
+
+spec:
+    capacity:
+      storage: {{ $service.persistentVolume.storage }}
+
+    accessModes:
+      - ReadWriteOnce
+
+    persistentVolumeReclaimPolicy: Retain
+    storageClassName: {{ $service.name }}
+    {{- if eq $service.persistentVolume.type "nfs" }}
+
+    nfs:
+      path: {{ $service.persistentVolume.path }}
+      server: {{ $service.persistentVolume.server }}
+    {{- else }}
+
+    hostPath:
+      path: {{ $service.persistentVolume.path }}
+    {{- end }}
+    volumeMode: Filesystem
+{{- end }}
+{{- end }}
+
+
+{{- range $service := .Values.microservices }}
+  {{- include "pv"  (dict "service" $service) }}
+{{ end }}
+
+{{- range $service := .Values.cronjobs }}
+  {{- include "pv" (dict "service" $service) }}
+{{ end }}
